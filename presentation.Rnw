@@ -146,7 +146,7 @@ Peptydy sygnałowe rozpoczynają się naładowanym dodatnio n-regionem, po któr
 \end{frame}  
   
 \begin{frame}{Peptydy sygnałowe}  
-<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=4.1,results='asis'>>=
+<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=4,results='asis'>>=
 plot_pca(pca_full)
   #ggtitle("PCA częstości aminokwasów w peptydach sygnałowych")
 @  
@@ -196,8 +196,165 @@ decode_ngrams(seq2ngrams(sample_seq, 3, aa_v, d = c(0, 1))[1L:8]) %>%
 @
 \end{frame}  
 
+\begin{frame}{n-gramy}  
+<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=4.5,results='asis'>>=
+L <- 5
+m <- 20 
+m2 <- 6
+n <- 1:5
+n_max <- L*m^n
+n_max2 <- L*m2^n
+#dat <- data.frame(n = c(n, n), n_max = c(n_max, n_max2), m = c(rep(m, 5), rep(m2, 5)))
+dat <- data.frame(n = n, n_max = n_max, m = rep(m, 5))
+dat[["m"]] <- factor(dat[["m"]])
+
+ggplot(dat, aes(x = n, y = n_max, color = m, label = formatC(n_max, digits = 4))) + 
+  geom_line(linetype="dotted", size=1.5) + 
+  geom_point(size=4, shape=16) +
+  geom_text(size = 4, vjust = -1.5, hjust = "inward", color = "red") +
+  coord_cartesian(ylim = c(1, 4.5e7)) +
+  scale_x_continuous("n", breaks = 0L:5) +
+  scale_y_continuous("Całkowita liczba n-gramów (skala logarytmiczna)",
+                     trans = "log10") +
+  scale_color_discrete("Długość alfabetu") +
+  my_theme
+@
+n-gramy tworzą bardzo duże i trudne do analizy zbiory danych.
+
+\end{frame}
+
+\begin{frame}{n-gramy}  
+QuiPT (\textbf{Qui}ck \textbf{P}ermutation \textbf{T}est) szybko i efektywnie filtruje informatywne n-gramy.
+<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=3.6,results='asis'>>=
+sim_quipt <- read.csv("./data/sim_evaluation50.csv") %>%
+  mutate(motif_len = nchar(gsub(".", "", ngrams2df(as.character(motif))[["ngram"]], fixed = TRUE))) 
+
+filter(sim_quipt, criterion == "ig") %>% 
+  select(l_seq, n_seq, criterion, p.value, motif_len) %>% 
+  group_by(l_seq, n_seq, motif_len) %>% 
+  summarise(acc = mean(p.value < 0.05)) %>% 
+  ungroup %>% 
+  mutate(motif_len = paste0("Długość n-gramu: ", motif_len)) %>% 
+  ggplot(aes(x = factor(l_seq), y = factor(n_seq), fill = acc)) +
+  geom_tile(color = "black") +
+  facet_wrap(~ motif_len) +
+  scale_x_discrete("Długość sekwencji") +
+  scale_y_discrete("Liczba sekwencji") +
+  scale_fill_gradient("Dokładność", low = "orange", high = "blue") +
+  my_theme 
+  
+@
+\footnotesize Dokładność (frakcja poprawnie zidentyfikowanych motywów) QuiPT w testach symulacyjnych.
+
+\end{frame}
+
+\begin{frame}{Uproszczone alfabety}  
+
+Dwie sekwencje zupełnie różne pod względu składu aminokwasowego mogą być identyczne pod względem właściwości reszt.
+
+
+<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=4.5,results='asis'>>=
+seq1 <- c("i", "c", "v", "i", "v", "s", "s", "g", "y", "w")
+seq2 <- c("l", "m", "l", "f", "v", "p", "t", "s", "g", "t")
+@
+
+Sekwencja I: 
+
+\texttt{\Sexpr{toupper(paste0(seq1, collapse = ""))}}
+
+\medskip
+
+Sekwencja II: 
+
+\texttt{\Sexpr{toupper(paste0(seq2, collapse = ""))}}
+
+\end{frame}  
+
+
+\begin{frame}{Uproszczone alfabety}  
+<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=4.5,results='asis'>>=
+seq_dat <- rbind(data.frame(seq = "Sekwencja I", pos = 1L:10, 
+                            aa = seq1, val = aaprop["KYTJ820101", seq1]),
+                 data.frame(seq = "Sekwencja II", pos = 1L:10, 
+                            aa = seq2, val = aaprop["KYTJ820101", seq2])) %>% 
+  mutate(hydroph = val < 0.6)
+
+ggplot(seq_dat, aes(x = factor(pos), y = val, label = toupper(aa), 
+                    group = seq, colour = hydroph)) +
+  geom_text(vjust = "outward", size = 5, show_guide = FALSE) +
+  #geom_point(size = 0) +
+  geom_line(linetype = "dashed", color = "black") +
+  facet_wrap(~ seq, ncol = 1) +
+  scale_x_discrete("Pozycja") +
+  scale_y_continuous("Wartość hydrofobowości (Kyte-Doolittle, 1982)", expand = c(.1, .1)) +
+  #scale_color_discrete("Hydrofobowy")
+  #guides(colour = guide_legend(override.aes = list(size=4))) +
+  my_theme 
+@
+
+\end{frame}  
+
+\begin{frame}{Uproszczone alfabety}  
+\begin{table}
+\begin{tabular}{cl}
+\toprule
+Nr podgrupy & Aminokwasy \\ 
+\midrule
+  1 & C, I, L, K, M, F, W, Y, V \\ 
+\rowcolor[gray]{0.85}  2 & A, D, E, G, H, N, Q, P, R, S, T \\ 
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{columns}
+\begin{column}{0.5\textwidth}
+   Sekwencja I: 
+
+\texttt{\Sexpr{toupper(paste0(seq1, collapse = ""))}}
+
+Po uproszczeniu alfabetu:
+
+\texttt{\Sexpr{paste0(c(rep(1, 5), rep(2, 5)), collapse = "")}}
+\end{column}
+\begin{column}{0.5\textwidth}  %%<--- here
+    Sekwencja II: 
+
+\texttt{\Sexpr{toupper(paste0(seq2, collapse = ""))}}
+
+Po uproszczeniu alfabetu:
+
+\texttt{\Sexpr{paste0(c(rep(1, 5), rep(2, 5)), collapse = "")}}
+\end{column}
+\end{columns}
+
+
+
+
+
+
+\end{frame}  
+
+\begin{frame}{Uproszczone alfabety}  
+<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=4.5,results='asis'>>=
+grid.arrange(plot_pca(pca_full) + ggtitle("Pełny alfabet"),
+             plot_pca(pca_naive) + ggtitle("Zredukowany alfabet"),
+             ncol = 2)
+@
+PCA częstości pojedynczych aminokwasów w peptydach sygnałowych innych eukariotów i zaródźców malarii.
+
+\end{frame}  
+
 
 \section{Wyniki}
+
+\begin{frame}{Porównanie z innymi klasyfikatorami}
+AmyloGram: oparte o redukcję alfabetów i kodowanie n-gramowe narzędzie do predykcji białek amyloidogennych.
+
+\begin{figure} 
+\includegraphics[width=0.95\textwidth]{static_figure/ngram3.eps}
+\end{figure}
+
+\end{frame}
 
 \begin{frame}{Porównanie z innymi klasyfikatorami}
 
@@ -217,18 +374,18 @@ AmyloGram & \textbf{0.8972} & \textbf{0.6307} \\
 \end{table}
 
 
-AmyloGram porównano z innymi klasyfikatorami na zewnętrznymi zbiorze danych \textit{pep424}.
+AmyloGram porównano z innymi klasyfikatorami na zewnętrznym zbiorze danych \textit{pep424}.
 
 \footnotesize
-AUC (Area Under the Curve): miara jakości predykcji (1 - idealny dobry klasyfikator, 0 - idealnie zły klasyfikator).
+AUC (Area Under the Curve): miara jakości predykcji (1: idealny dobry klasyfikator, 0: idealnie zły klasyfikator).
 
-MCC (Matthew's Correlation Coefficient): miara jakości predykcji (1 - idealny dobry klasyfikator, -1 - idealnie zły klasyfikator).
+MCC (Matthew's Correlation Coefficient): miara jakości predykcji (1: idealny dobry klasyfikator, -1: idealnie zły klasyfikator).
 
 \end{frame}
 
-\begin{frame}{Experimental verification}
+\begin{frame}{Walidacja eksperymentalna}
 
-Eksperymentalnie (spektroskopia fourierowska) zweryfikowano \textbf{8 peptydów}, które w bazie AmyLoad są oznaczone jako nieamyloidowe, a przez AmyloGram zostały rozpoznane jako amyloidy.
+Przy pomocy spektroskopii fourierowskiej zweryfikowano \textbf{8 peptydów}, które w bazie AmyLoad są oznaczone jako nieamyloidowe, a przez AmyloGram zostały rozpoznane jako amyloidy.
 
 <<echo = FALSE,message=FALSE,fig.align='center',fig.height=3.9,warning=FALSE>>=
 ftir_res <- read.csv("ftir_amylogram_pasta2_literature.csv")
@@ -245,16 +402,16 @@ ftir_res_agg <- ftir_res %>%
   rbind(data.frame(amyl_db = "Nieamyloid", amyl_ftir = "Amyloid", count = 3)) %>% 
   mutate(frac = count/sum(count),
          count_nice = ifelse(count > 2, paste0(count, " peptydy"), paste0(count, " peptyd")),
-         amyl_db = factor(c("Brak danych", 
-                            "Brak danych", 
-                            "Amyloid")))
+         amyl_db = factor(c("brak danych", 
+                            "brak danych", 
+                            "amyloid")))
 
 ggplot(ftir_res_agg, aes(x = amyl_ftir, y = frac, fill = amyl_db,
                          label = count_nice)) +
   geom_bar(stat = "identity") +
   geom_text(position = position_stack(vjust=0.5), color = "white", size = 4) +
   scale_y_continuous("Frakcja peptydów") +
-  scale_x_discrete("FTIR result") +
+  scale_x_discrete("Wynik FTIR") +
   scale_fill_manual("Dane literaturowe", values = c("darkred", "navyblue"),
                     na.value = "gray47") +
   my_theme
@@ -262,7 +419,34 @@ ggplot(ftir_res_agg, aes(x = amyl_ftir, y = frac, fill = amyl_db,
 
 \end{frame}
 
+\begin{frame}{Podsumowanie}
+\begin{enumerate}
+\item Stworzono algorytm efektywnie selekcjonujący informatywne n-gramy 
+reprezentujące sekwencje aminokwasowe.
 
+\item Porównano metody poszukujące uproszczone 
+alfabety aminokwasowe.
+
+\item Opracowaną metodologię zastosowano do przewidywania białek 
+amyloidogennych tworząc efektywny program do przewidywania białek amyloidogennych AmyloGram.
+
+\end{enumerate}
+\end{frame}  
+
+\begin{frame}{Perspektywy}
+\begin{enumerate}
+\item Zastosowanie opracowanej metodologii do przewidywania lokalizacji 
+subkomórkowej białek. Porównanie wyników przewidywań z predyktorami opartymi na 
+pełnych alfabetach aminokwasowych i innych informacjach o sekwencjach białek.
+
+\item Zastosowanie opracowanej metodologii do przewidywania lokalizacji 
+subkomórkowej białek. Porównanie wyników przewidywań z predyktorami opartymi na 
+pełnych alfabetach aminokwasowych i innych informacjach o sekwencjach białek.
+
+\item Upublicznienie rozwijanych metod w postaci pakietu \textit{biogram} w środowisku programistycznym i  statystycznym \textbf{R}.
+
+\end{enumerate}
+\end{frame}  
 
 \begin{frame}[allowframebreaks]
         \frametitle{References}
