@@ -8,6 +8,7 @@
 \usepackage{array,booktabs,tabularx}
 \usepackage{epstopdf}
 \usepackage{colortbl, xcolor}
+\usepackage{url}
 \usepackage[MeX,T1,plmath]{polski}
 
 \newcommand\Fontvi{\fontsize{6}{7.2}\selectfont}
@@ -99,8 +100,8 @@ Prace eksperymentalne zazwyczaj poprzedza się analizami komputerowymi, które p
 Przykłady: 
 
 \begin{itemize}
-\item przewidywanie lokalizacji subkomórkowej białek (sygnałów kierujących),  
-\item predykcja struktury drugorzędowej i trzeciorzędowej białek oraz kwasów nukleinowych,
+\item przewidywanie lokalizacji białek w komórce,  
+\item modelowanie struktury przestrzennej białek oraz kwasów nukleinowych,
 \item wykrywanie miejsc wiązania czynników transkrypcyjnych,
 \item poszukiwanie sekwencji kodujących białko.
 \end{itemize}
@@ -121,8 +122,13 @@ Agregaty amyloidowe (czerwony) wokół neuronów (zielony). Strittmatter Laborat
 
   
 \begin{frame}{Białka amyloidowe}
-  
-Proces agregacji jest inicjowany w obrębie tzw. hot spots, krótkich (6-15 aminokwasów), ale zróżnicowanych podsekwencji, które występują we wszystkich białkach amyloidowych i formują specyficzne struktury $\beta$ typu "zamka błyskawicznego" (zipper-like).
+
+Hot-spots:
+\begin{itemize}
+\item krótkie (6-15 aminokwasów), ale bardzo zróżnicowane fragmenty białek amyloidogennych,
+\item miejsce inicjacji agregacji amyloidowej,
+\item formują specyficzne struktury $\beta$ typu "zamka błyskawicznego".
+\end{itemize}
 
 \begin{figure} 
 \includegraphics[width=0.9\textwidth]{static_figure/zipper_structure.jpg}
@@ -134,13 +140,24 @@ Proces agregacji jest inicjowany w obrębie tzw. hot spots, krótkich (6-15 amin
   
 \begin{frame}{Peptydy sygnałowe}
 
-Peptydy sygnałowe to krótkie (15-30 aminokwasów) N-końcowe sekwencje kierujące białko do sekrecji.
-
 \begin{figure} 
 \includegraphics[width=0.75\textwidth]{static_figure/SP.eps}
 \end{figure}
 
-Peptydy sygnałowe rozpoczynają się naładowanym dodatnio n-regionem, po którym występuje hydrofobowy h-region i c-region zakończony miejscem cięcia rozpoznawanym przez peptydazę sygnałową. 
+Peptydy sygnałowe:
+
+\begin{itemize}
+\item to krótkie (15-30 aminokwasów) N-końcowe sekwencje,
+\item składają się z trzech regionów, gdzie preferowane są aminokwasy o określonych właściwościach fizykochemicznych,
+\item wystepują w białkach układu odpornościowego, strukturalnych, enzymach metabolicznych i hormonach.
+\end{itemize}
+
+\end{frame}
+
+
+
+
+%Peptydy sygnałowe rozpoczynają się naładowanym dodatnio n-regionem, po którym występuje hydrofobowy h-region i c-region zakończony miejscem cięcia rozpoznawanym przez peptydazę sygnałową. 
 
 
 \end{frame}  
@@ -156,10 +173,8 @@ Peptydy sygnałowe nie wymagają konkretnych aminokwasów, ale reszt o określon
 
 \end{frame}  
 
-\section{Metody}
-
 \begin{frame}{n-gramy}
-n-gramy (k-tuple, k-mery) to podsekwencje o długości $n$. 
+n-gramy (k-tuple, k-mery) to podsekwencje o długości $n$. Dzięki uwzględnianiu szerszego otoczenia danej reszty aminokwasowej, n-gramy niosą ze sobą więcej informacji niż pojedyncze reszty.
 
 <<echo = FALSE, message=FALSE,warning=FALSE,fig.height=5,results='asis'>>=
 seqs <- read.fasta("./data/seqs.fasta", seqtype = "AA")
@@ -183,17 +198,37 @@ sample_seq <- as.matrix(seq_df[, 2L:10])
 colnames(sample_seq) <- paste0("P", 1L:ncol(sample_seq))
 rownames(sample_seq) <- paste0("S", 1L:4)
 sample_seq_dat <- data.frame(sample_seq)
-cat(print_bt(sample_seq_dat))
+
+print(xtable(sample_seq_dat[1, 1L:5], include.rownames = FALSE, booktabs = TRUE))
 @
 
-3-gramy (z przerwą między drugim i trzecim elementem):
+1-gramy:
 <<echo = FALSE, message=FALSE,warning=FALSE,fig.height=5,results='asis'>>=
-decode_ngrams(seq2ngrams(sample_seq, 3, aa_v, d = c(0, 1))[1L:8]) %>% 
+seq2ngrams(sample_seq[1, 1L:5, drop = FALSE], 1, aa_v, d = 0) %>% 
+  decode_ngrams %>% 
   #paste0(",") %>%
-  paste0(cls, "{", ., "}") %>% 
   gsub("_", " - ", x = .) %>% 
   cat(sep = ", ")
 @
+
+2-gramy:
+<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=5,results='asis'>>=
+seq2ngrams(sample_seq[1, 1L:5, drop = FALSE], 2, aa_v, d = 0) %>% 
+  decode_ngrams %>% 
+  #paste0(",") %>%
+  gsub("_", " - ", x = .) %>% 
+  cat(sep = ", ")
+@
+
+2-gramy (przerwa 1):
+<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=5,results='asis'>>=
+seq2ngrams(sample_seq[1, 1L:5, drop = FALSE], 2, aa_v, d = 1) %>% 
+  decode_ngrams %>% 
+  #paste0(",") %>%
+  gsub("_", " -- ", x = .) %>% 
+  cat(sep = ", ")
+@
+
 \end{frame}  
 
 \begin{frame}{n-gramy}  
@@ -254,8 +289,8 @@ Dwie sekwencje zupełnie różne pod względu składu aminokwasowego mogą być 
 
 
 <<echo = FALSE, message=FALSE,warning=FALSE,fig.height=4.5,results='asis'>>=
-seq1 <- c("i", "c", "v", "i", "v", "s", "s", "g", "y", "w")
-seq2 <- c("l", "m", "l", "f", "v", "p", "t", "s", "g", "t")
+seq1 <- c("f", "k", "v", "w", "p", "d", "h", "g", "s", "g")
+seq2 <- c("y", "m", "c", "i", "y", "a", "r", "q", "t", "n")
 @
 
 Sekwencja I: 
@@ -274,10 +309,10 @@ Sekwencja II:
 \begin{frame}{Uproszczone alfabety}  
 <<echo = FALSE, message=FALSE,warning=FALSE,fig.height=4.5,results='asis'>>=
 seq_dat <- rbind(data.frame(seq = "Sekwencja I", pos = 1L:10, 
-                            aa = seq1, val = aaprop["KYTJ820101", seq1]),
+                            aa = seq1, val = aaprop["ARGP820101", seq1]),
                  data.frame(seq = "Sekwencja II", pos = 1L:10, 
-                            aa = seq2, val = aaprop["KYTJ820101", seq2])) %>% 
-  mutate(hydroph = val < 0.6)
+                            aa = seq2, val = aaprop["ARGP820101", seq2])) %>% 
+  mutate(hydroph = val < 0.4)
 
 ggplot(seq_dat, aes(x = factor(pos), y = val, label = toupper(aa), 
                     group = seq, colour = hydroph)) +
@@ -286,7 +321,7 @@ ggplot(seq_dat, aes(x = factor(pos), y = val, label = toupper(aa),
   geom_line(linetype = "dashed", color = "black") +
   facet_wrap(~ seq, ncol = 1) +
   scale_x_discrete("Pozycja") +
-  scale_y_continuous("Wartość hydrofobowości (Kyte-Doolittle, 1982)", expand = c(.1, .1)) +
+  scale_y_continuous("Wartość hydrofobowości (Argos et al., 1982)", expand = c(.1, .1)) +
   #scale_color_discrete("Hydrofobowy")
   #guides(colour = guide_legend(override.aes = list(size=4))) +
   my_theme 
@@ -300,28 +335,23 @@ ggplot(seq_dat, aes(x = factor(pos), y = val, label = toupper(aa),
 \toprule
 Nr podgrupy & Aminokwasy \\ 
 \midrule
-  1 & C, I, L, K, M, F, W, Y, V \\ 
-\rowcolor[gray]{0.85}  2 & A, D, E, G, H, N, Q, P, R, S, T \\ 
+  1 & C, I, L, K, M, F, P, W, Y, V \\ 
+\rowcolor[gray]{0.85}  2 & A, D, E, G, H, N, Q, R, S, T \\ 
 \bottomrule
 \end{tabular}
 \end{table}
 
 \begin{columns}
-\begin{column}{0.5\textwidth}
-   Sekwencja I: 
+\begin{column}{0.44\textwidth}
+ 
+Sekwencja I: \texttt{\Sexpr{toupper(paste0(seq1, collapse = ""))}} \textrightarrow
 
-\texttt{\Sexpr{toupper(paste0(seq1, collapse = ""))}}
+Sekwencja II: \texttt{\Sexpr{toupper(paste0(seq2, collapse = ""))}} \textrightarrow
 
-Po uproszczeniu alfabetu:
-
-\texttt{\Sexpr{paste0(c(rep(1, 5), rep(2, 5)), collapse = "")}}
 \end{column}
 \begin{column}{0.5\textwidth}  %%<--- here
-    Sekwencja II: 
 
-\texttt{\Sexpr{toupper(paste0(seq2, collapse = ""))}}
-
-Po uproszczeniu alfabetu:
+\texttt{\Sexpr{paste0(c(rep(1, 5), rep(2, 5)), collapse = "")}}
 
 \texttt{\Sexpr{paste0(c(rep(1, 5), rep(2, 5)), collapse = "")}}
 \end{column}
@@ -345,15 +375,38 @@ PCA częstości pojedynczych aminokwasów w peptydach sygnałowych innych eukari
 \end{frame}  
 
 
-\section{Wyniki}
-
-\begin{frame}{Porównanie z innymi klasyfikatorami}
+\begin{frame}{AmyloGram}
 AmyloGram: oparte o redukcję alfabetów i kodowanie n-gramowe narzędzie do predykcji białek amyloidogennych.
+\end{frame}
 
+
+
+\begin{frame}{AmyloGram}
+%inkscape -D -z --file=amylogram1.svg --export-pdf=amylogram1.pdf --export-latex
 \begin{figure} 
-\includegraphics[width=0.95\textwidth]{static_figure/ngram3.eps}
+\includegraphics[width=1.05\textwidth]{static_figure/amylogram1.eps}
 \end{figure}
+\end{frame}
 
+\begin{frame}{AmyloGram}
+%inkscape -D -z --file=amylogram1.svg --export-pdf=amylogram1.pdf --export-latex
+\begin{figure} 
+\includegraphics[width=1.05\textwidth]{static_figure/amylogram2.eps}
+\end{figure}
+\end{frame}
+
+\begin{frame}{AmyloGram}
+%inkscape -D -z --file=amylogram1.svg --export-pdf=amylogram1.pdf --export-latex
+\begin{figure} 
+\includegraphics[width=1.05\textwidth]{static_figure/amylogram3.eps}
+\end{figure}
+\end{frame}
+
+\begin{frame}{AmyloGram}
+%inkscape -D -z --file=amylogram1.svg --export-pdf=amylogram1.pdf --export-latex
+\begin{figure} 
+\includegraphics[width=1.05\textwidth]{static_figure/amylogram4.eps}
+\end{figure}
 \end{frame}
 
 \begin{frame}{Porównanie z innymi klasyfikatorami}
@@ -374,7 +427,7 @@ AmyloGram & \textbf{0.8972} & \textbf{0.6307} \\
 \end{table}
 
 
-AmyloGram porównano z innymi klasyfikatorami na zewnętrznym zbiorze danych \textit{pep424}.
+%AmyloGram porównano z innymi klasyfikatorami na zewnętrznym zbiorze danych \textit{pep424}.
 
 \footnotesize
 AUC (Area Under the Curve): miara jakości predykcji (1: idealny dobry klasyfikator, 0: idealnie zły klasyfikator).
@@ -383,11 +436,18 @@ MCC (Matthew's Correlation Coefficient): miara jakości predykcji (1: idealny do
 
 \end{frame}
 
+
+\begin{frame}{Walidacja eksperymentalna}
+\begin{enumerate}
+\item Wszystkie nieamyloidowe peptydy z bazy AmyLoad zanalizowano AmyloGramem. 
+\item Wybrano 8 peptydów z najwyższym prawdopodobieństwem amyloidogenności.
+\item Peptydy zanalizowano przy pomocy spektroskopii fourierowskiej (FTIR).
+\end{enumerate}
+\end{frame}
+
 \begin{frame}{Walidacja eksperymentalna}
 
-Przy pomocy spektroskopii fourierowskiej zweryfikowano \textbf{8 peptydów}, które w bazie AmyLoad są oznaczone jako nieamyloidowe, a przez AmyloGram zostały rozpoznane jako amyloidy.
-
-<<echo = FALSE,message=FALSE,fig.align='center',fig.height=3.9,warning=FALSE>>=
+<<echo = FALSE,message=FALSE,fig.align='center',fig.height=4.9,warning=FALSE>>=
 ftir_res <- read.csv("ftir_amylogram_pasta2_literature.csv")
 
 ftir_res_agg <- ftir_res %>% 
@@ -428,7 +488,7 @@ reprezentujące sekwencje aminokwasowe.
 alfabety aminokwasowe.
 
 \item Opracowaną metodologię zastosowano do przewidywania białek 
-amyloidogennych tworząc efektywny program do przewidywania białek amyloidogennych AmyloGram.
+amyloidogennych tworząc pakiet \textbf{R} i web server AmyloGram (\url{http://www.smorfland.uni.wroc.pl/shiny/AmyloGram/}).
 
 \end{enumerate}
 \end{frame}  
@@ -436,14 +496,10 @@ amyloidogennych tworząc efektywny program do przewidywania białek amyloidogenn
 \begin{frame}{Perspektywy}
 \begin{enumerate}
 \item Zastosowanie opracowanej metodologii do przewidywania lokalizacji 
-subkomórkowej białek. Porównanie wyników przewidywań z predyktorami opartymi na 
-pełnych alfabetach aminokwasowych i innych informacjach o sekwencjach białek.
+subkomórkowej białek.
+.
 
-\item Zastosowanie opracowanej metodologii do przewidywania lokalizacji 
-subkomórkowej białek. Porównanie wyników przewidywań z predyktorami opartymi na 
-pełnych alfabetach aminokwasowych i innych informacjach o sekwencjach białek.
-
-\item Upublicznienie rozwijanych metod w postaci pakietu \textit{biogram} w środowisku programistycznym i  statystycznym \textbf{R}.
+\item Upublicznienie rozwijanych metod w postaci pakietu \textit{biogram} w środowisku programistycznym i statystycznym \textbf{R}.
 
 \end{enumerate}
 \end{frame}  
@@ -454,102 +510,6 @@ pełnych alfabetach aminokwasowych i innych informacjach o sekwencjach białek.
   \bibliography{references}
 \end{frame}  
 
-\begin{frame}{n-grams}
-n-grams (k-tuples) are vectors of $n$ characters derived from input sequence(s). 
 
-<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=5,results='asis'>>=
-seqs <- read.fasta("./data/seqs.fasta", seqtype = "AA")
-seq_df <- lapply(seqs, function(i) i[1L:27]) %>% 
-  do.call(rbind, .) %>% 
-  cbind(name = sub(">", "", sapply(seqs, function(i) attr(i, "Annot"))), .) %>% 
-  data.frame
-
-colnames(seq_df)[-1] <- paste0("P", 1L:27)
-
-mseq_df <- melt(seq_df, id.vars = "name",
-     value.name = "aa", variable.name = "pos") %>% 
-  mutate(aa = factor(aa, levels = a()[-1])) %>% 
-  mutate(pos = as.numeric(sub("P", "", pos))) %>% 
-  mutate(name = factor(gsub(" ", "\n", name))) %>% 
-  mutate(name = relevel(name, "Plasmodium\nfalciparum")) %>% 
-  mutate(sig = pos == "25") %>% 
-  inner_join(data.frame(aa = a()[-1], hydr = aaprop[2, ]))
-
-sample_seq <- as.matrix(seq_df[, 2L:10])
-colnames(sample_seq) <- paste0("P", 1L:ncol(sample_seq))
-rownames(sample_seq) <- paste0("S", 1L:4)
-sample_seq_dat <- data.frame(sample_seq)
-cat(print_bt(sample_seq_dat))
-@
-
-1-grams:
-<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=5,results='asis'>>=
-decode_ngrams(seq2ngrams(sample_seq, 1, aa_v, d = 0)[1L:8]) %>% 
-  #paste0(",") %>%
-  paste0(cls, .) %>% 
-  gsub("_", "-", x = .) %>% 
-  cat(sep = ", ")
-@
-\end{frame}
-
-\begin{frame}{n-grams}
-<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=5,results='asis'>>=
-cat(print_bt(sample_seq_dat))
-@
-
-2-grams:
-<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=5,results='asis'>>=
-decode_ngrams(seq2ngrams(sample_seq, 2, aa_v, d = 0)[1L:8]) %>% 
-  #paste0(",") %>%
-  paste0(cls, "{", ., "}") %>% 
-  gsub("_", "-", x = .) %>% 
-  cat(sep = ", ")
-@
-\end{frame}
-
-\begin{frame}{n-grams}
-<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=5,results='asis'>>=
-cat(print_bt(sample_seq_dat))
-@
-
-3-grams:
-<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=5,results='asis'>>=
-decode_ngrams(seq2ngrams(sample_seq, 3, aa_v, d = 0)[1L:8]) %>% 
-  #paste0(",") %>%
-  paste0(cls, "{", ., "}") %>% 
-  gsub("_", "-", x = .) %>% 
-  cat(sep = ", ")
-@
-\end{frame}
-
-\begin{frame}{n-grams}
-<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=5,results='asis'>>=
-cat(print_bt(sample_seq_dat))
-@
-
-2-grams (with a single gap):
-<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=5,results='asis'>>=
-decode_ngrams(seq2ngrams(sample_seq, 2, aa_v, d = 1)[1L:8]) %>% 
-  #paste0(",") %>%
-  paste0(cls, "{", ., "}") %>% 
-  gsub("_", "-", x = .) %>% 
-  cat(sep = ", ")
-@
-\end{frame}
-
-\begin{frame}{n-grams}
-<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=5,results='asis'>>=
-cat(print_bt(sample_seq_dat))
-@
-
-3-grams (with gaps):
-<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=5,results='asis'>>=
-decode_ngrams(seq2ngrams(sample_seq, 3, aa_v, d = c(1, 2))[1L:8]) %>% 
-  #paste0(",") %>%
-  paste0(cls, "{", ., "}") %>% 
-  gsub("_", " - ", x = .) %>% 
-  cat(sep = ", ")
-@
-\end{frame}
 
 \end{document}
