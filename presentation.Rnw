@@ -163,7 +163,7 @@ plot_pca(pca_full)
   #ggtitle("PCA częstości aminokwasów w peptydach sygnałowych")
 @  
 
-Peptydy sygnałowe zarodźców malarii zachowują swoją funkcję mając skład aminokwasowy różny od peptydów sygnałowych innych eukariontów.
+Peptydy sygnałowe zarodźców malarii mają skład aminokwasowy różny od peptydów sygnałowych innych eukariontów.
 
 
 \end{frame}  
@@ -267,6 +267,16 @@ QuiPT jest o wiele szybszy niż klasyczne testy permutacyjne i zwraca dokładnie
 
 
 \footnotesize Dokładność (frakcja poprawnie zidentyfikowanych motywów) QuiPT w testach symulacyjnych.
+
+\end{frame}
+
+\begin{frame}{Uproszczone alfabety}  
+Uproszczone alfabety:
+\begin{itemize}
+\item opierają się na grupowaniu aminokwasów o podobnych właściwościach fizykochemicznych,
+\item ułatwiają modelowanie i przewidywanie właściwości sekwencji~\citep{murphy_simplified_2000},
+\item tworzą łatwiej interpretowalne modele.
+\end{itemize}
 
 \end{frame}
 
