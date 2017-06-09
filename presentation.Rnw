@@ -91,8 +91,7 @@ names(best_enc) <- 1L:6
   
 
 \maketitle
-\section{Bioinformatyczne przewidywanie funkcji białek}
-  
+
 \begin{frame}{} 
 
 Prace eksperymentalne zazwyczaj poprzedza się analizami komputerowymi, które pozwalają optymalniej zaprojektować dalsze badania.
@@ -147,20 +146,16 @@ Hot-spots:
 Peptydy sygnałowe:
 
 \begin{itemize}
-\item to krótkie (15-30 aminokwasów) N-końcowe sekwencje,
-\item składają się z trzech regionów, gdzie preferowane są aminokwasy o określonych właściwościach fizykochemicznych,
-\item wystepują w białkach układu odpornościowego, strukturalnych, enzymach metabolicznych i hormonach.
+\item krótkie (15-30 aminokwasów) N-końcowe sekwencje,
+\item wystepują w białkach układu odpornościowego, strukturalnych, enzymach metabolicznych i hormonach,
+\item składają się z trzech regionów, gdzie preferowane są aminokwasy o określonych właściwościach fizykochemicznych.
+\item zróżnicowany skład aminokwasowy peptydów sygnałowych utrudnia ich rozpoznawanie.
 \end{itemize}
 
 \end{frame}
 
-
-
-
 %Peptydy sygnałowe rozpoczynają się naładowanym dodatnio n-regionem, po którym występuje hydrofobowy h-region i c-region zakończony miejscem cięcia rozpoznawanym przez peptydazę sygnałową. 
 
-
-\end{frame}  
   
 \begin{frame}{Peptydy sygnałowe}  
 <<echo = FALSE, message=FALSE,warning=FALSE,fig.height=4,results='asis'>>=
@@ -168,13 +163,18 @@ plot_pca(pca_full)
   #ggtitle("PCA częstości aminokwasów w peptydach sygnałowych")
 @  
 
-\footnotesize
-Peptydy sygnałowe nie wymagają konkretnych aminokwasów, ale reszt o określonych właściwościach fizykochemicznych. Przykładem mogą być peptydy sygnałowe zarodźców malarii, których skład aminokwasowy jest istotnie różny od składu innych peptydów sygnałowych eukariontów.
+Peptydy sygnałowe zarodźców malarii zachowują swoją funkcję mając skład aminokwasowy różny od peptydów sygnałowych innych eukariontów.
+
 
 \end{frame}  
 
 \begin{frame}{n-gramy}
-n-gramy (k-tuple, k-mery) to podsekwencje o długości $n$. Dzięki uwzględnianiu szerszego otoczenia danej reszty aminokwasowej, n-gramy niosą ze sobą więcej informacji niż pojedyncze reszty.
+n-gramy (k-tuple, k-mery):
+\begin{itemize}
+\item podsekwencje (ciągłe lub z przerwami) o długości $n$,
+\item uwzględniają otoczenie danej reszty aminokwasowej.
+\end{itemize}
+
 
 <<echo = FALSE, message=FALSE,warning=FALSE,fig.height=5,results='asis'>>=
 seqs <- read.fasta("./data/seqs.fasta", seqtype = "AA")
@@ -202,14 +202,6 @@ sample_seq_dat <- data.frame(sample_seq)
 print(xtable(sample_seq_dat[1, 1L:5], include.rownames = FALSE, booktabs = TRUE))
 @
 
-1-gramy:
-<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=5,results='asis'>>=
-seq2ngrams(sample_seq[1, 1L:5, drop = FALSE], 1, aa_v, d = 0) %>% 
-  decode_ngrams %>% 
-  #paste0(",") %>%
-  gsub("_", " - ", x = .) %>% 
-  cat(sep = ", ")
-@
 
 2-gramy:
 <<echo = FALSE, message=FALSE,warning=FALSE,fig.height=5,results='asis'>>=
@@ -228,6 +220,16 @@ seq2ngrams(sample_seq[1, 1L:5, drop = FALSE], 2, aa_v, d = 1) %>%
   gsub("_", " -- ", x = .) %>% 
   cat(sep = ", ")
 @
+
+3-gramy:
+<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=5,results='asis'>>=
+seq2ngrams(sample_seq[1, 1L:5, drop = FALSE], 3, aa_v, d = 0) %>% 
+  decode_ngrams %>% 
+  #paste0(",") %>%
+  gsub("_", " -- ", x = .) %>% 
+  cat(sep = ", ")
+@
+
 
 \end{frame}  
 
@@ -254,31 +256,16 @@ ggplot(dat, aes(x = n, y = n_max, color = m, label = formatC(n_max, digits = 4))
   scale_color_discrete("Długość alfabetu") +
   my_theme
 @
-n-gramy tworzą bardzo duże i trudne do analizy zbiory danych.
+n-gramy tworzą duże i trudne do analizy zbiory danych.
 
 \end{frame}
 
 \begin{frame}{n-gramy}  
 QuiPT (\textbf{Qui}ck \textbf{P}ermutation \textbf{T}est) szybko i efektywnie filtruje informatywne n-gramy.
-<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=3.6,results='asis'>>=
-sim_quipt <- read.csv("./data/sim_evaluation50.csv") %>%
-  mutate(motif_len = nchar(gsub(".", "", ngrams2df(as.character(motif))[["ngram"]], fixed = TRUE))) 
 
-filter(sim_quipt, criterion == "ig") %>% 
-  select(l_seq, n_seq, criterion, p.value, motif_len) %>% 
-  group_by(l_seq, n_seq, motif_len) %>% 
-  summarise(acc = mean(p.value < 0.05)) %>% 
-  ungroup %>% 
-  mutate(motif_len = paste0("Długość n-gramu: ", motif_len)) %>% 
-  ggplot(aes(x = factor(l_seq), y = factor(n_seq), fill = acc)) +
-  geom_tile(color = "black") +
-  facet_wrap(~ motif_len) +
-  scale_x_discrete("Długość sekwencji") +
-  scale_y_discrete("Liczba sekwencji") +
-  scale_fill_gradient("Dokładność", low = "orange", high = "blue") +
-  my_theme 
-  
-@
+QuiPT jest o wiele szybszy niż klasyczne testy permutacyjne i zwraca dokładniejsze p-wartości.
+
+
 \footnotesize Dokładność (frakcja poprawnie zidentyfikowanych motywów) QuiPT w testach symulacyjnych.
 
 \end{frame}
@@ -290,7 +277,7 @@ Dwie sekwencje zupełnie różne pod względu składu aminokwasowego mogą być 
 
 <<echo = FALSE, message=FALSE,warning=FALSE,fig.height=4.5,results='asis'>>=
 seq1 <- c("f", "k", "v", "w", "p", "d", "h", "g", "s", "g")
-seq2 <- c("y", "m", "c", "i", "y", "a", "r", "q", "t", "n")
+seq2 <- c("y", "m", "c", "i", "y", "r", "a", "q", "t", "n")
 @
 
 Sekwencja I: 
@@ -376,7 +363,7 @@ PCA częstości pojedynczych aminokwasów w peptydach sygnałowych innych eukari
 
 
 \begin{frame}{AmyloGram}
-AmyloGram: oparte o redukcję alfabetów i kodowanie n-gramowe narzędzie do predykcji białek amyloidogennych.
+AmyloGram: oparte o redukcję alfabetów i kodowanie n-gramowe narzędzie do predykcji białek amyloidogennych~\citep{burdukiewicz_prediction_2016}.
 \end{frame}
 
 
@@ -426,14 +413,13 @@ AmyloGram & \textbf{0.8972} & \textbf{0.6307} \\
 \end{tabular}
 \end{table}
 
-
-%AmyloGram porównano z innymi klasyfikatorami na zewnętrznym zbiorze danych \textit{pep424}.
-
-\footnotesize
 AUC (Area Under the Curve): miara jakości predykcji (1: idealny dobry klasyfikator, 0: idealnie zły klasyfikator).
 
 MCC (Matthew's Correlation Coefficient): miara jakości predykcji (1: idealny dobry klasyfikator, -1: idealnie zły klasyfikator).
 
+\footnotesize
+
+AmyloGram porównano z innymi klasyfikatorami na zewnętrznym zbiorze danych \textit{pep424}.
 \end{frame}
 
 
@@ -497,7 +483,6 @@ amyloidogennych tworząc pakiet \textbf{R} i web server AmyloGram (\url{http://w
 \begin{enumerate}
 \item Zastosowanie opracowanej metodologii do przewidywania lokalizacji 
 subkomórkowej białek.
-.
 
 \item Upublicznienie rozwijanych metod w postaci pakietu \textit{biogram} w środowisku programistycznym i statystycznym \textbf{R}.
 
