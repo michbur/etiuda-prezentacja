@@ -172,7 +172,7 @@ Peptydy sygnałowe zarodźców malarii mają skład aminokwasowy różny od pept
 n-gramy (k-tuple, k-mery):
 \begin{itemize}
 \item podsekwencje (ciągłe lub z przerwami) o długości $n$,
-\item uwzględniają otoczenie danej reszty aminokwasowej.
+\item uwzględniają otoczenie danej reszty.
 \end{itemize}
 
 
@@ -253,7 +253,7 @@ ggplot(dat, aes(x = n, y = n_max, color = m, label = formatC(n_max, digits = 4))
   scale_x_continuous("n", breaks = 0L:5) +
   scale_y_continuous("Całkowita liczba n-gramów (skala logarytmiczna)",
                      trans = "log10") +
-  scale_color_discrete("Długość alfabetu") +
+  scale_color_discrete("Rozmiar alfabetu") +
   my_theme
 @
 n-gramy tworzą duże i trudne do analizy zbiory danych.
@@ -263,11 +263,34 @@ n-gramy tworzą duże i trudne do analizy zbiory danych.
 \begin{frame}{n-gramy}  
 QuiPT (\textbf{Qui}ck \textbf{P}ermutation \textbf{T}est) szybko i efektywnie filtruje informatywne n-gramy.
 
-QuiPT jest o wiele szybszy niż klasyczne testy permutacyjne i zwraca dokładniejsze p-wartości.
 
+<<echo = FALSE, message=FALSE,warning=FALSE,fig.height=3.6,results='asis'>>=
+load("data/times2.RData")
 
-\footnotesize Dokładność (frakcja poprawnie zidentyfikowanych motywów) QuiPT w testach symulacyjnych.
+times_dat <- do.call(rbind, lapply(times, function(i) 
+  t(sapply(i, function(j) {
+    c(slow = unname(j[["slow"]]["elapsed"]),
+      quick = unname(j[["quick"]]["elapsed"]))
+  }))
+)) %>% 
+  data.frame %>% 
+  mutate(size = sort(rep(1L:5*10, 10))) %>% 
+  melt(id.vars = "size") %>% 
+  group_by(size, variable) %>% 
+  summarise(value = mean(value)) %>% 
+  ungroup %>% 
+  mutate(variable = factor(variable, labels = c("Test permutacyjny", "QuiPT")))
 
+ggplot(times_dat, aes(x = size, y = value, color = variable)) +
+  geom_point() +
+  geom_line(linetype = "dotted") +
+  scale_y_continuous("Czas obliczeń [s]") +
+  scale_x_continuous("Liczba testowanych n-gramów") +
+  scale_color_manual("Test", values = c("red", "blue")) +
+  my_theme
+@
+
+QuiPT jest szybszy niż klasyczne testy permutacyjne i zwraca dokładniejsze p-wartości.
 \end{frame}
 
 \begin{frame}{Uproszczone alfabety}  
@@ -315,7 +338,7 @@ ggplot(seq_dat, aes(x = factor(pos), y = val, label = toupper(aa),
                     group = seq, colour = hydroph)) +
   geom_text(vjust = "outward", size = 5, show_guide = FALSE) +
   #geom_point(size = 0) +
-  geom_line(linetype = "dashed", color = "black") +
+  geom_line(linetype = "dotted", color = "black") +
   facet_wrap(~ seq, ncol = 1) +
   scale_x_discrete("Pozycja") +
   scale_y_continuous("Wartość hydrofobowości (Argos et al., 1982)", expand = c(.1, .1)) +
