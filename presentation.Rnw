@@ -519,6 +519,8 @@ amyloidogennych tworząc pakiet \textbf{R} i web server AmyloGram (\url{http://w
 \item Zastosowanie opracowanej metodologii do przewidywania lokalizacji 
 subkomórkowej białek.
 
+\item Stworzenie oprogramowania wspierającego interpretowanie wyników analizy n-gramów i uproszczonych alfabetów.
+
 \item Upublicznienie rozwijanych metod w postaci pakietu \textit{biogram} w środowisku programistycznym i statystycznym \textbf{R}.
 
 \end{enumerate}
