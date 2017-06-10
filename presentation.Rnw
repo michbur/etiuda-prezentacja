@@ -460,7 +460,8 @@ AmyloGram porównano z innymi klasyfikatorami na zewnętrznym zbiorze danych \te
 \begin{enumerate}
 \item Wszystkie nieamyloidowe peptydy z bazy AmyLoad zanalizowano AmyloGramem. 
 \item Wybrano 8 peptydów z najwyższym prawdopodobieństwem amyloidogenności.
-\item Peptydy zanalizowano przy pomocy spektroskopii fourierowskiej (FTIR).
+\item Peptydy zbadano przy pomocy spektroskopii fourierowskiej (FTIR).
+\item Wyniki potwierdzono esejami z czerwienią Kongo i tioflawiną.
 \end{enumerate}
 \end{frame}
 
@@ -503,7 +504,7 @@ ggplot(ftir_res_agg, aes(x = amyl_ftir, y = frac, fill = amyl_db,
 \item Stworzono algorytm efektywnie selekcjonujący informatywne n-gramy 
 reprezentujące sekwencje aminokwasowe.
 
-\item Porównano metody poszukujące uproszczone 
+\item Opracowano metody poszukujące uproszczone 
 alfabety aminokwasowe.
 
 \item Opracowaną metodologię zastosowano do przewidywania białek 
