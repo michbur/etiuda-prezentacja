@@ -158,12 +158,13 @@ Peptydy sygnałowe:
 
   
 \begin{frame}{Peptydy sygnałowe}  
+Peptydy sygnałowe zarodźców malarii mają skład aminokwasowy różny od peptydów sygnałowych innych eukariontów.
 <<echo = FALSE, message=FALSE,warning=FALSE,fig.height=4,results='asis'>>=
 plot_pca(pca_full)
   #ggtitle("PCA częstości aminokwasów w peptydach sygnałowych")
 @  
 
-Peptydy sygnałowe zarodźców malarii mają skład aminokwasowy różny od peptydów sygnałowych innych eukariontów.
+PCA częstości aminokwasów w peptydach sygnałowych.
 
 
 \end{frame}  
@@ -387,7 +388,7 @@ Sekwencja II: \texttt{\Sexpr{toupper(paste0(seq2, collapse = ""))}} \textrightar
 \begin{frame}{Uproszczone alfabety}  
 <<echo = FALSE, message=FALSE,warning=FALSE,fig.height=4.5,results='asis'>>=
 grid.arrange(plot_pca(pca_full) + ggtitle("Pełny alfabet"),
-             plot_pca(pca_naive) + ggtitle("Zredukowany alfabet"),
+             plot_pca(pca_naive) + ggtitle("Uproszczony alfabet"),
              ncol = 2)
 @
 PCA częstości pojedynczych aminokwasów w peptydach sygnałowych innych eukariotów i zaródźców malarii.
